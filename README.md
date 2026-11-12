@@ -1,5 +1,10 @@
 # DIT – Invoice Processing Automation
 
+[![CI Test Suite](https://github.com/novena290508-art/DIT_Invoice_Processing_Automation/actions/workflows/ci.yml/badge.svg)](https://github.com/novena290508-art/DIT_Invoice_Processing_Automation/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Flask 3.0](https://img.shields.io/badge/framework-Flask_3.0-green.svg)](https://flask.palletsprojects.com/)
+[![Tests Passing](https://img.shields.io/badge/pytest-17%20passed-brightgreen.svg)](https://github.com/novena290508-art/DIT_Invoice_Processing_Automation)
+
 ## 1. Project Title & Team Details
 - **Project Title:** DIT – Invoice Processing Automation
 - **Organization:** DefineInfoTech Pvt. Ltd. (DIT)
