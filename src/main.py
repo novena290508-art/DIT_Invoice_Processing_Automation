@@ -25,6 +25,7 @@ from src.report_generator import generate_all_reports
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SAMPLE_DATA_PATH = PROJECT_ROOT / "data" / "sample" / "sample_invoices.csv"
 UPLOAD_FOLDER = PROJECT_ROOT / "data" / "input"
+MASTER_STORE_PATH = UPLOAD_FOLDER / "master_invoice_register.csv"
 ALLOWED_EXTENSIONS = {".csv", ".xlsx"}
 
 SAFE_DATA_LOAD_ERROR = (
@@ -53,15 +54,26 @@ app.config["SECRET_KEY"] = (
 )
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
-# NOTE: Global APP_STATE is intended strictly for a single-user local demonstration
-# and is not designed for simultaneous multi-user production sessions.
 APP_STATE: Dict[str, Any] = {
-    "active_file": SAMPLE_DATA_PATH,
-    "active_filename": SAMPLE_DATA_PATH.name,
     "cached_path": None,
     "cached_mtime": None,
     "cached_data": None,
 }
+
+
+def _ensure_master_store() -> Path:
+    UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+    if not MASTER_STORE_PATH.exists():
+        if SAMPLE_DATA_PATH.exists():
+            import shutil
+            shutil.copyfile(SAMPLE_DATA_PATH, MASTER_STORE_PATH)
+        else:
+            import pandas as pd
+            pd.DataFrame(columns=[
+                "invoice_number", "vendor_name", "invoice_date",
+                "subtotal", "tax_amount", "total_amount", "currency"
+            ]).to_csv(MASTER_STORE_PATH, index=False)
+    return MASTER_STORE_PATH
 
 
 def _is_allowed_file(filename: str) -> bool:
@@ -69,12 +81,7 @@ def _is_allowed_file(filename: str) -> bool:
 
 
 def _get_processed_data() -> Dict[str, Any]:
-    active_path = Path(APP_STATE["active_file"])
-    if not active_path.exists():
-        active_path = SAMPLE_DATA_PATH
-        APP_STATE["active_file"] = SAMPLE_DATA_PATH
-        APP_STATE["active_filename"] = SAMPLE_DATA_PATH.name
-
+    active_path = _ensure_master_store()
     mtime = active_path.stat().st_mtime
     if (
         APP_STATE["cached_data"] is not None
@@ -83,16 +90,35 @@ def _get_processed_data() -> Dict[str, Any]:
     ):
         return APP_STATE["cached_data"]
 
-    df = read_invoice_file(active_path)
+    try:
+        df = read_invoice_file(active_path)
+    except Exception as exc:
+        logger.warning("Could not read master store (%s), reinitializing: %s", active_path, exc)
+        import pandas as pd
+        df = pd.DataFrame(columns=[
+            "invoice_number", "vendor_name", "invoice_date",
+            "subtotal", "tax_amount", "total_amount", "currency"
+        ])
+
     processed = process_invoices(df)
     report_paths = generate_all_reports(processed)
     processed["report_paths"] = report_paths
-    processed["active_filename"] = APP_STATE["active_filename"]
+    processed["active_filename"] = "Master Invoice Database"
 
     APP_STATE["cached_path"] = str(active_path)
     APP_STATE["cached_mtime"] = mtime
     APP_STATE["cached_data"] = processed
     return processed
+
+
+@app.context_processor
+def inject_global_data():
+    try:
+        data = _get_processed_data()
+        count = data["summary"].get("total_invoices", 0)
+    except Exception:
+        count = 0
+    return {"global_invoice_count": count}
 
 
 @app.route("/")
@@ -155,11 +181,39 @@ def upload():
 
         try:
             uploaded.save(saved_path)
-            df = read_invoice_file(saved_path)
-            processed = process_invoices(df)
-            report_paths = generate_all_reports(processed)
-            processed["report_paths"] = report_paths
-            processed["active_filename"] = safe_name
+            new_df = read_invoice_file(saved_path)
+            master_path = _ensure_master_store()
+
+            try:
+                import pandas as pd
+                existing_df = read_invoice_file(master_path)
+            except Exception:
+                import pandas as pd
+                existing_df = pd.DataFrame(columns=[
+                    "invoice_number", "vendor_name", "invoice_date",
+                    "subtotal", "tax_amount", "total_amount", "currency"
+                ])
+
+            upload_mode = request.form.get("upload_mode", "append").strip().lower()
+            if upload_mode == "replace":
+                combined_df = new_df.copy()
+            else:
+                combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+
+            combined_df.to_csv(master_path, index=False)
+            APP_STATE["cached_data"] = None
+            APP_STATE["cached_mtime"] = None
+            _get_processed_data()
+
+            if upload_mode == "replace":
+                flash(f"Replaced database with {len(new_df)} invoice(s) from '{safe_name}'.", "success")
+            else:
+                flash(
+                    f"Successfully added {len(new_df)} invoice(s) from '{safe_name}'. Total invoices stored: {len(combined_df)}.",
+                    "success",
+                )
+            logger.info("Updated master invoice dataset with %d rows from %s (mode=%s). Total=%d", len(new_df), safe_name, upload_mode, len(combined_df))
+            return redirect(url_for("invoices"))
         except (FileNotFoundError, DataReaderError) as exc:
             saved_path.unlink(missing_ok=True)
             logger.warning("Rejected uploaded file (%s): %s", safe_name, exc)
@@ -171,17 +225,7 @@ def upload():
             flash(SAFE_UNEXPECTED_ERROR, "error")
             return redirect(url_for("upload"))
 
-        APP_STATE["active_file"] = saved_path
-        APP_STATE["active_filename"] = safe_name
-        APP_STATE["cached_path"] = str(saved_path)
-        APP_STATE["cached_mtime"] = saved_path.stat().st_mtime
-        APP_STATE["cached_data"] = processed
-
-        logger.info("Activated uploaded invoice dataset: %s", saved_path.name)
-        flash(f"Successfully uploaded and processed '{safe_name}'.", "success")
-        return redirect(url_for("dashboard"))
-
-    return render_template("upload.html", active_filename=APP_STATE["active_filename"])
+    return render_template("upload.html", active_filename="Master Invoice Database")
 
 
 @app.route("/invoices")
@@ -222,6 +266,52 @@ def invoices():
         status_filter=status_filter,
         active_filename=data["active_filename"],
     )
+
+
+@app.route("/invoices/delete/<int:row_number>", methods=["POST"])
+def delete_invoice(row_number: int):
+    try:
+        master_path = _ensure_master_store()
+        df = read_invoice_file(master_path)
+        row_idx = row_number - 1
+        if 0 <= row_idx < len(df):
+            inv_num = str(df.iloc[row_idx].get("invoice_number", "")).strip() or f"Row {row_number}"
+            df = df.drop(df.index[row_idx]).reset_index(drop=True)
+            df.to_csv(master_path, index=False)
+            APP_STATE["cached_data"] = None
+            APP_STATE["cached_mtime"] = None
+            _get_processed_data()
+            flash(f"Invoice '{inv_num}' (Row #{row_number}) has been deleted.", "success")
+        else:
+            flash(f"Invoice at row #{row_number} not found.", "error")
+    except Exception as exc:
+        logger.exception("Error deleting invoice at row %d: %s", row_number, exc)
+        flash("Failed to delete invoice.", "error")
+
+    referrer = request.referrer
+    if referrer and any(k in referrer for k in ("invoices", "exceptions", "dashboard")):
+        return redirect(referrer)
+    return redirect(url_for("invoices"))
+
+
+@app.route("/invoices/clear-all", methods=["POST"])
+def clear_all_invoices():
+    try:
+        master_path = _ensure_master_store()
+        import pandas as pd
+        empty_df = pd.DataFrame(columns=[
+            "invoice_number", "vendor_name", "invoice_date",
+            "subtotal", "tax_amount", "total_amount", "currency"
+        ])
+        empty_df.to_csv(master_path, index=False)
+        APP_STATE["cached_data"] = None
+        APP_STATE["cached_mtime"] = None
+        _get_processed_data()
+        flash("All invoices have been cleared from the database.", "info")
+    except Exception as exc:
+        logger.exception("Error clearing all invoices: %s", exc)
+        flash("Failed to clear invoices.", "error")
+    return redirect(url_for("invoices"))
 
 
 @app.route("/exceptions")
@@ -326,12 +416,17 @@ def api_dashboard_data():
 
 @app.route("/reset-sample", methods=["POST"])
 def reset_sample():
-    APP_STATE["active_file"] = SAMPLE_DATA_PATH
-    APP_STATE["active_filename"] = SAMPLE_DATA_PATH.name
-    APP_STATE["cached_path"] = None
-    APP_STATE["cached_mtime"] = None
-    APP_STATE["cached_data"] = None
-    flash("Reset active dataset to sample_invoices.csv.", "info")
+    try:
+        master_path = _ensure_master_store()
+        import shutil
+        shutil.copyfile(SAMPLE_DATA_PATH, master_path)
+        APP_STATE["cached_data"] = None
+        APP_STATE["cached_mtime"] = None
+        _get_processed_data()
+        flash("Reset invoice database to default sample dataset.", "info")
+    except Exception as exc:
+        logger.exception("Error resetting to sample dataset: %s", exc)
+        flash("Failed to reset dataset.", "error")
     return redirect(url_for("dashboard"))
 
 

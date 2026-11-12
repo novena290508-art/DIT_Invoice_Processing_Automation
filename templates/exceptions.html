@@ -45,6 +45,7 @@
                     <th>Status</th>
                     <th>Category</th>
                     <th>Exception Reason</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,6 +62,11 @@
                     <td><span class="status-badge status-{{ exc.status|lower }}">{{ exc.status }}</span></td>
                     <td>{{ exc.category }}</td>
                     <td>{{ exc.reason }}</td>
+                    <td class="action-cell">
+                        <form action="{{ url_for('delete_invoice', row_number=exc.row_number) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete flagged invoice {{ exc.invoice_number }}?');">
+                            <button type="submit" class="btn btn-danger btn-xs">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

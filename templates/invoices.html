@@ -6,7 +6,15 @@
 {% block content %}
 <section class="panel">
     <div class="panel-header">
-        <h2>Processed Invoice Register ({{ invoices|length }} shown)</h2>
+        <h2>Master Invoice Register ({{ invoices|length }} shown)</h2>
+        <div class="panel-header-actions" style="display: flex; gap: 0.5rem; align-items: center;">
+            <a href="{{ url_for('upload') }}" class="btn btn-primary btn-sm">+ Add Invoices</a>
+            {% if invoices %}
+            <form action="{{ url_for('clear_all_invoices') }}" method="POST" style="display:inline;" onsubmit="return confirm('WARNING: Are you sure you want to clear ALL invoices from the database?');">
+                <button type="submit" class="btn btn-secondary btn-sm">Clear All</button>
+            </form>
+            {% endif %}
+        </div>
     </div>
 
     <form action="{{ url_for('invoices') }}" method="GET" class="filter-bar">
@@ -43,6 +51,7 @@
                     <th>Currency</th>
                     <th>Status</th>
                     <th>Notes</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,6 +67,11 @@
                     <td>{{ inv.currency }}</td>
                     <td><span class="status-badge status-{{ inv.status|lower }}">{{ inv.status }}</span></td>
                     <td>{{ inv.reason }}</td>
+                    <td class="action-cell">
+                        <form action="{{ url_for('delete_invoice', row_number=inv.row_number) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete invoice {{ inv.invoice_number or inv.row_number }}?');">
+                            <button type="submit" class="btn btn-danger btn-xs">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

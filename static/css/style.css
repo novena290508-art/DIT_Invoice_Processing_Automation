@@ -112,6 +112,10 @@ code {
 .btn-secondary { background: var(--bg-surface-elevated); color: var(--text-primary); border-color: var(--border-subtle); }
 .btn-secondary:hover { border-color: var(--border-accent); background: #1b2d56; }
 .btn-sm { padding: 0.42rem 0.82rem; font-size: 0.82rem; }
+.btn-xs { padding: 0.22rem 0.55rem; font-size: 0.76rem; border-radius: var(--radius-sm); font-weight: 600; }
+.btn-danger { background: rgba(239, 68, 68, 0.16); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.45); }
+.btn-danger:hover { background: #ef4444; color: #ffffff; border-color: #ef4444; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35); }
+.action-cell { text-align: center; white-space: nowrap; }
 .btn-block { width: 100%; }
 .flash-container { display: flex; flex-direction: column; gap: 0.65rem; }
 .alert { padding: 0.85rem 1.05rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); font-size: 0.92rem; font-weight: 500; }

@@ -42,11 +42,11 @@
 
             <div class="sidebar-footer">
                 <div class="dataset-pill">
-                    <span class="pill-label">Active Dataset</span>
-                    <strong class="pill-value">{{ active_filename|default('sample_invoices.csv') }}</strong>
+                    <span class="pill-label">Invoice Database</span>
+                    <strong class="pill-value">{{ global_invoice_count }} Invoices Stored</strong>
                 </div>
                 <form action="{{ url_for('reset_sample') }}" method="POST" class="reset-form">
-                    <button type="submit" class="btn btn-secondary btn-sm btn-block">Reset to Sample CSV</button>
+                    <button type="submit" class="btn btn-secondary btn-sm btn-block">Reset to Default Sample</button>
                 </form>
             </div>
         </aside>
@@ -58,8 +58,8 @@
                     <h1 class="page-heading">{% block page_title %}DIT – Invoice Processing Automation{% endblock %}</h1>
                 </div>
                 <div class="topbar-right">
-                    <span class="env-badge">Dataset: {{ active_filename|default('sample_invoices.csv') }}</span>
-                    <a href="{{ url_for('upload') }}" class="btn btn-primary btn-sm">Upload File</a>
+                    <span class="env-badge">Live Store: {{ global_invoice_count }} Invoices</span>
+                    <a href="{{ url_for('upload') }}" class="btn btn-primary btn-sm">+ Upload File</a>
                 </div>
             </header>
 

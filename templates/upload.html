@@ -18,6 +18,20 @@
                 <p class="file-hint">Maximum file size: 16 MB</p>
             </div>
 
+            <div class="upload-mode-selection" style="margin: 1.25rem 0; padding: 1rem; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-primary);">Ingestion Mode</label>
+                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: var(--text-primary);">
+                        <input type="radio" name="upload_mode" value="append" checked>
+                        <span><strong>Add to Existing Invoices</strong> (Accumulate batches)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: var(--text-secondary);">
+                        <input type="radio" name="upload_mode" value="replace">
+                        <span><strong>Replace Database</strong> (Fresh start)</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Upload &amp; Process Invoices</button>
                 <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
