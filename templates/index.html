@@ -8,58 +8,35 @@
 <div class="alert alert-error">{{ error }}</div>
 {% endif %}
 
-<section class="kpi-grid" aria-label="Executive Financial & Operational Metrics">
+<section class="kpi-grid" aria-label="Invoice Key Metrics">
     <article class="kpi-card kpi-total">
-        <span class="kpi-label">Total Volume &amp; Vendors</span>
-        <strong class="kpi-value">{{ summary.get('total_invoices', 0) }} <span class="kpi-unit">Invoices</span></strong>
-        <span class="kpi-meta">{{ summary.get('unique_vendor_count', 0) }} Active Vendors</span>
+        <span class="kpi-label">Total Invoices</span>
+        <strong class="kpi-value">{{ summary.get('total_invoices', 0) }}</strong>
+        <span class="kpi-meta">Pass Rate: {{ summary.get('pass_rate', 0) }}%</span>
     </article>
 
     <article class="kpi-card kpi-valid">
-        <span class="kpi-label">Approved for Payment</span>
-        <strong class="kpi-value">{{ summary.get('valid_invoices', 0) }} <span class="kpi-unit">Cleared</span></strong>
-        <span class="kpi-meta">
-            {% for curr, b in summary.get('currency_reconciliation', {}).items() %}
-                <strong>{{ curr }}</strong> {{ "{:,.0f}".format(b.total_amount) }}{% if not loop.last %} &bull; {% endif %}
-            {% else %}
-                No approved spend
-            {% endfor %}
-        </span>
-    </article>
-
-    <article class="kpi-card kpi-invalid">
-        <span class="kpi-label">Financial Risk Blocked</span>
-        <strong class="kpi-value">
-            {% set risk_totals = summary.get('exception_currency_totals', {}) %}
-            {% if risk_totals.get('INR') %}
-                ₹{{ "{:,.0f}".format(risk_totals['INR'].total_amount) }}
-            {% elif risk_totals %}
-                {{ "{:,.0f}".format(risk_totals.values()|map(attribute='total_amount')|sum) }}
-            {% else %}
-                ₹0
-            {% endif %}
-        </strong>
-        <span class="kpi-meta">
-            {% if risk_totals %}
-                Protected from duplicates &amp; mismatches
-            {% else %}
-                Zero discrepancies flagged
-            {% endif %}
-        </span>
+        <span class="kpi-label">Valid Invoices</span>
+        <strong class="kpi-value">{{ summary.get('valid_invoices', 0) }}</strong>
+        <span class="kpi-meta">Cleared all checks</span>
     </article>
 
     <article class="kpi-card kpi-warning">
-        <span class="kpi-label">AP Action Required</span>
-        <strong class="kpi-value">{{ summary.get('exception_count', 0) }} <span class="kpi-unit">Exceptions</span></strong>
-        <span class="kpi-meta">
-            {{ summary.get('invalid_invoices', 0) }} Invalid &bull; {{ summary.get('duplicate_invoices', 0) }} Dup &bull; {{ summary.get('warning_invoices', 0) }} Warning
-        </span>
+        <span class="kpi-label">Warning / Review</span>
+        <strong class="kpi-value">{{ summary.get('warning_invoices', 0) }}</strong>
+        <span class="kpi-meta">Zero-value review required</span>
     </article>
 
     <article class="kpi-card kpi-duplicate">
-        <span class="kpi-label">Straight-Through Rate</span>
-        <strong class="kpi-value">{{ summary.get('pass_rate', 0) }}%</strong>
-        <span class="kpi-meta">{{ summary.get('valid_invoices', 0) }} / {{ summary.get('total_invoices', 0) }} Clean First-Pass</span>
+        <span class="kpi-label">Duplicates</span>
+        <strong class="kpi-value">{{ summary.get('duplicate_invoices', 0) }}</strong>
+        <span class="kpi-meta">Flagged: {{ summary.get('duplicate_flag_count', 0) }}</span>
+    </article>
+
+    <article class="kpi-card kpi-invalid">
+        <span class="kpi-label">Invalid Invoices</span>
+        <strong class="kpi-value">{{ summary.get('invalid_invoices', 0) }}</strong>
+        <span class="kpi-meta">Total Exceptions: {{ summary.get('exception_count', 0) }}</span>
     </article>
 </section>
 
