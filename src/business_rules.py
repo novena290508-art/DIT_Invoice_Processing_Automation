@@ -160,9 +160,16 @@ def process_invoices(df: pd.DataFrame) -> Dict[str, Any]:
     total_invoices = len(processed_records)
     exception_count = len(exceptions)
     pass_rate = round((valid_count / total_invoices) * 100, 2) if total_invoices > 0 else 0.0
+    unique_vendors = set(
+        record["normalized_vendor"]
+        for record in processed_records
+        if record.get("normalized_vendor")
+    )
+    unique_vendor_count = len(unique_vendors)
 
     summary = {
         "total_invoices": total_invoices,
+        "unique_vendor_count": unique_vendor_count,
         "valid_invoices": valid_count,
         "warning_invoices": warning_count,
         "duplicate_invoices": duplicate_status_count,
