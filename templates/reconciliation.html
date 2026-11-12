@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Reconciliation | DIT – Invoice Processing Automation{% endblock %}
+{% block page_title %}Per-Currency Financial Reconciliation{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <h2>Valid Invoice Totals by Currency</h2>
+        <a href="{{ url_for('download_report', report_type='reconciliation_summary', format='csv') }}" class="btn btn-primary btn-sm">Download Summary CSV</a>
+    </div>
+    <p class="panel-subtitle">Totals are calculated separately per currency; different currencies are never combined.</p>
+
+    {% set curr_totals = summary.get('currency_reconciliation', {}) %}
+    {% if curr_totals %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Currency</th>
+                    <th>Valid Invoice Count</th>
+                    <th>Valid Subtotal</th>
+                    <th>Valid Tax Amount</th>
+                    <th>Valid Total Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for curr, vals in curr_totals.items()|sort %}
+                <tr>
+                    <td><strong>{{ curr }}</strong></td>
+                    <td>{{ vals.count }}</td>
+                    <td>{{ "%.2f"|format(vals.subtotal) }}</td>
+                    <td>{{ "%.2f"|format(vals.tax_amount) }}</td>
+                    <td><strong>{{ "%.2f"|format(vals.total_amount) }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-state">No valid invoices available for currency reconciliation.</p>
+    {% endif %}
+</section>
+
+<section class="panel-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <h3>Exception &amp; Review Totals by Currency</h3>
+        </div>
+        {% set exc_curr = summary.get('exception_currency_totals', {}) %}
+        {% if exc_curr %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Currency</th>
+                        <th>Flagged Count</th>
+                        <th>Numeric Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for curr, vals in exc_curr.items()|sort %}
+                    <tr>
+                        <td><strong>{{ curr }}</strong></td>
+                        <td>{{ vals.count }}</td>
+                        <td>{{ "%.2f"|format(vals.total_amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-state">No exception amounts recorded.</p>
+        {% endif %}
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <h3>Exception Category Breakdown</h3>
+        </div>
+        {% set breakdown = summary.get('exception_breakdown', {}) %}
+        {% if breakdown %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Exception Category</th>
+                        <th>Record Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat, count in breakdown.items()|sort %}
+                    <tr>
+                        <td>{{ cat }}</td>
+                        <td><strong>{{ count }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-state">No exceptions to categorize.</p>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

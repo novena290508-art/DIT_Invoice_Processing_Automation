@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DIT – Invoice Processing Automation{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <a href="{{ url_for('dashboard') }}" class="brand-link">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="DIT Official Logo" class="brand-logo">
+                    <div class="brand-text">
+                        <span class="brand-title">DIT Finance</span>
+                        <span class="brand-subtitle">Invoice Automation</span>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Main Navigation">
+                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('upload') }}" class="nav-link {% if request.endpoint == 'upload' %}active{% endif %}">
+                    <span>Upload Invoices</span>
+                </a>
+                <a href="{{ url_for('invoices') }}" class="nav-link {% if request.endpoint == 'invoices' %}active{% endif %}">
+                    <span>Invoice Register</span>
+                </a>
+                <a href="{{ url_for('exceptions') }}" class="nav-link {% if request.endpoint == 'exceptions' %}active{% endif %}">
+                    <span>Exceptions &amp; Review</span>
+                </a>
+                <a href="{{ url_for('reconciliation') }}" class="nav-link {% if request.endpoint == 'reconciliation' %}active{% endif %}">
+                    <span>Reconciliation</span>
+                </a>
+                <a href="{{ url_for('reports') }}" class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}">
+                    <span>Reports</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="dataset-pill">
+                    <span class="pill-label">Active Dataset</span>
+                    <strong class="pill-value">{{ active_filename|default('sample_invoices.csv') }}</strong>
+                </div>
+                <form action="{{ url_for('reset_sample') }}" method="POST" class="reset-form">
+                    <button type="submit" class="btn btn-secondary btn-sm btn-block">Reset to Sample CSV</button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="main-wrapper">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button type="button" class="menu-toggle" id="sidebarToggle" aria-label="Toggle Navigation">&#9776;</button>
+                    <h1 class="page-heading">{% block page_title %}DIT – Invoice Processing Automation{% endblock %}</h1>
+                </div>
+                <div class="topbar-right">
+                    <span class="env-badge">Dataset: {{ active_filename|default('sample_invoices.csv') }}</span>
+                    <a href="{{ url_for('upload') }}" class="btn btn-primary btn-sm">Upload File</a>
+                </div>
+            </header>
+
+            <main class="content-area">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-container" role="alert">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+
+            <footer class="app-footer">
+                <p>DIT – Invoice Processing Automation &middot; DefineInfoTech Pvt. Ltd. Internship Project</p>
+            </footer>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

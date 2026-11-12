@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice Register | DIT – Invoice Processing Automation{% endblock %}
+{% block page_title %}Invoice Register{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <h2>Processed Invoice Register ({{ invoices|length }} shown)</h2>
+    </div>
+
+    <form action="{{ url_for('invoices') }}" method="GET" class="filter-bar">
+        <div class="filter-group">
+            <label for="searchInput" class="sr-only">Search invoices</label>
+            <input type="text" id="searchInput" name="q" value="{{ search_query|default('') }}" placeholder="Search by invoice number, vendor, or currency..." class="form-control">
+        </div>
+        <div class="filter-group">
+            <label for="statusSelect" class="sr-only">Filter by status</label>
+            <select id="statusSelect" name="status" class="form-control">
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
+                <option value="valid" {% if status_filter == 'valid' %}selected{% endif %}>Valid</option>
+                <option value="warning" {% if status_filter == 'warning' %}selected{% endif %}>Warning</option>
+                <option value="duplicate" {% if status_filter == 'duplicate' %}selected{% endif %}>Duplicate</option>
+                <option value="invalid" {% if status_filter == 'invalid' %}selected{% endif %}>Invalid</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ url_for('invoices') }}" class="btn btn-secondary">Clear</a>
+    </form>
+
+    {% if invoices %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Row</th>
+                    <th>Invoice Number</th>
+                    <th>Vendor Name</th>
+                    <th>Invoice Date</th>
+                    <th>Subtotal</th>
+                    <th>Tax Amount</th>
+                    <th>Total Amount</th>
+                    <th>Currency</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td>{{ inv.row_number }}</td>
+                    <td>{{ inv.invoice_number or '(Missing)' }}</td>
+                    <td>{{ inv.vendor_name or '(Missing)' }}</td>
+                    <td>{{ inv.invoice_date or '(Missing)' }}</td>
+                    <td>{{ inv.subtotal }}</td>
+                    <td>{{ inv.tax_amount }}</td>
+                    <td>{{ inv.total_amount }}</td>
+                    <td>{{ inv.currency }}</td>
+                    <td><span class="status-badge status-{{ inv.status|lower }}">{{ inv.status }}</span></td>
+                    <td>{{ inv.reason }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state-box">
+        <p class="empty-state">No invoices match the current search or status filter.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

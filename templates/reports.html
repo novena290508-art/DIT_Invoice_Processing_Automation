@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Reports | DIT – Invoice Processing Automation{% endblock %}
+{% block page_title %}Generated Reports &amp; Exports{% endblock %}
+
+{% block content %}
+<section class="reports-grid">
+    <article class="panel report-card">
+        <div class="panel-header">
+            <h3>Invoice Register</h3>
+            <span class="status-badge status-valid">CSV &amp; XLSX</span>
+        </div>
+        <p>Complete processed register of all {{ summary.get('total_invoices', 0) }} invoice records with Valid, Warning, Duplicate, and Invalid statuses.</p>
+        <div class="report-actions">
+            <a href="{{ url_for('download_report', report_type='invoice_register', format='csv') }}" class="btn btn-primary">Download CSV</a>
+            <a href="{{ url_for('download_report', report_type='invoice_register', format='xlsx') }}" class="btn btn-secondary">Download Excel</a>
+        </div>
+    </article>
+
+    <article class="panel report-card">
+        <div class="panel-header">
+            <h3>Exception Report</h3>
+            <span class="status-badge status-invalid">CSV &amp; XLSX</span>
+        </div>
+        <p>Detailed log of all {{ summary.get('exception_count', 0) }} invalid, duplicate, and warning/review-required records with failure reasons.</p>
+        <div class="report-actions">
+            <a href="{{ url_for('download_report', report_type='exception_report', format='csv') }}" class="btn btn-primary">Download CSV</a>
+            <a href="{{ url_for('download_report', report_type='exception_report', format='xlsx') }}" class="btn btn-secondary">Download Excel</a>
+        </div>
+    </article>
+
+    <article class="panel report-card">
+        <div class="panel-header">
+            <h3>Reconciliation Summary</h3>
+            <span class="status-badge status-warning">CSV &amp; XLSX</span>
+        </div>
+        <p>Aggregated invoice status counts, pass rate ({{ summary.get('pass_rate', 0) }}%), and separate per-currency financial totals.</p>
+        <div class="report-actions">
+            <a href="{{ url_for('download_report', report_type='reconciliation_summary', format='csv') }}" class="btn btn-primary">Download CSV</a>
+            <a href="{{ url_for('download_report', report_type='reconciliation_summary', format='xlsx') }}" class="btn btn-secondary">Download Excel</a>
+        </div>
+    </article>
+</section>
+{% endblock %}

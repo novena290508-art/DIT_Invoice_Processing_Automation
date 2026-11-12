@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | DIT – Invoice Processing Automation{% endblock %}
+{% block page_title %}Executive Finance Dashboard{% endblock %}
+
+{% block content %}
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<section class="kpi-grid" aria-label="Invoice Key Metrics">
+    <article class="kpi-card kpi-total">
+        <span class="kpi-label">Total Invoices</span>
+        <strong class="kpi-value">{{ summary.get('total_invoices', 0) }}</strong>
+        <span class="kpi-meta">Pass Rate: {{ summary.get('pass_rate', 0) }}%</span>
+    </article>
+
+    <article class="kpi-card kpi-valid">
+        <span class="kpi-label">Valid Invoices</span>
+        <strong class="kpi-value">{{ summary.get('valid_invoices', 0) }}</strong>
+        <span class="kpi-meta">Cleared all checks</span>
+    </article>
+
+    <article class="kpi-card kpi-warning">
+        <span class="kpi-label">Warning / Review</span>
+        <strong class="kpi-value">{{ summary.get('warning_invoices', 0) }}</strong>
+        <span class="kpi-meta">Zero-value review required</span>
+    </article>
+
+    <article class="kpi-card kpi-duplicate">
+        <span class="kpi-label">Duplicates</span>
+        <strong class="kpi-value">{{ summary.get('duplicate_invoices', 0) }}</strong>
+        <span class="kpi-meta">Flagged: {{ summary.get('duplicate_flag_count', 0) }}</span>
+    </article>
+
+    <article class="kpi-card kpi-invalid">
+        <span class="kpi-label">Invalid Invoices</span>
+        <strong class="kpi-value">{{ summary.get('invalid_invoices', 0) }}</strong>
+        <span class="kpi-meta">Total Exceptions: {{ summary.get('exception_count', 0) }}</span>
+    </article>
+</section>
+
+<section class="cta-banner">
+    <div class="cta-info">
+        <h2>Invoice Processing Overview</h2>
+        <p>Active dataset: <strong>{{ active_filename|default('sample_invoices.csv') }}</strong>. Upload a new CSV or Excel (.xlsx) batch to run validation, duplicate detection, and per-currency reconciliation.</p>
+    </div>
+    <div class="cta-actions">
+        <a href="{{ url_for('upload') }}" class="btn btn-primary">Upload New Dataset</a>
+        <a href="{{ url_for('reports') }}" class="btn btn-secondary">Download Reports</a>
+    </div>
+</section>
+
+<section class="charts-grid" id="dashboardCharts" data-api-url="{{ url_for('api_dashboard_data') }}">
+    <article class="panel chart-panel">
+        <div class="panel-header">
+            <h3>Invoice Status Distribution</h3>
+        </div>
+        <div class="chart-box">
+            <canvas id="statusDistributionChart" aria-label="Invoice Status Distribution Chart"></canvas>
+        </div>
+    </article>
+
+    <article class="panel chart-panel">
+        <div class="panel-header">
+            <h3>Valid Totals by Currency</h3>
+        </div>
+        <div class="chart-box">
+            <canvas id="currencyTotalsChart" aria-label="Valid Totals by Currency Chart"></canvas>
+        </div>
+    </article>
+</section>
+
+<section class="panel-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <h3>Recent Invoice Records</h3>
+            <a href="{{ url_for('invoices') }}" class="panel-link">View All &rarr;</a>
+        </div>
+        {% if records %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Vendor</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Currency</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in records %}
+                    <tr>
+                        <td>{{ rec.invoice_number or '(Missing)' }}</td>
+                        <td>{{ rec.vendor_name or '(Missing)' }}</td>
+                        <td>{{ rec.invoice_date or '(Missing)' }}</td>
+                        <td>{{ rec.total_amount }}</td>
+                        <td>{{ rec.currency }}</td>
+                        <td><span class="status-badge status-{{ rec.status|lower }}">{{ rec.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-state">No invoice records available.</p>
+        {% endif %}
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <h3>Top Exceptions &amp; Warnings</h3>
+            <a href="{{ url_for('exceptions') }}" class="panel-link">View All &rarr;</a>
+        </div>
+        {% if exceptions %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Row</th>
+                        <th>Invoice #</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exc in exceptions %}
+                    <tr>
+                        <td>{{ exc.row_number }}</td>
+                        <td>{{ exc.invoice_number }}</td>
+                        <td><span class="status-badge status-{{ exc.status|lower }}">{{ exc.status }}</span></td>
+                        <td>{{ exc.reason }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-state">No exceptions or warnings detected.</p>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

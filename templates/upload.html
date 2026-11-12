@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Invoices | DIT – Invoice Processing Automation{% endblock %}
+{% block page_title %}Upload Invoice Dataset{% endblock %}
+
+{% block content %}
+<section class="upload-layout">
+    <article class="panel upload-panel">
+        <div class="panel-header">
+            <h2>Upload CSV or Excel (.xlsx) File</h2>
+        </div>
+        <p class="panel-subtitle">Original uploaded files are preserved untouched in <code>data/input/</code> while processed outputs are generated separately.</p>
+
+        <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+            <div class="file-dropzone">
+                <label for="invoice_file" class="file-label">Select Invoice Dataset (.csv or .xlsx)</label>
+                <input type="file" id="invoice_file" name="invoice_file" accept=".csv,.xlsx" required class="file-input">
+                <p class="file-hint">Maximum file size: 16 MB</p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Upload &amp; Process Invoices</button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </form>
+    </article>
+
+    <article class="panel info-panel">
+        <div class="panel-header">
+            <h3>Supported Schema &amp; Rules</h3>
+        </div>
+        <ul class="spec-list">
+            <li><strong>Allowed Formats:</strong> <code>.csv</code> (UTF-8, UTF-8 BOM, Latin-1) and <code>.xlsx</code></li>
+            <li><strong>Required Columns:</strong> <code>invoice_number</code>, <code>vendor_name</code>, <code>invoice_date</code>, <code>subtotal</code>, <code>tax_amount</code>, <code>total_amount</code>, <code>currency</code></li>
+            <li><strong>Validation:</strong> Mandatory fields, valid dates, numeric/non-negative amounts, and <code>subtotal + tax_amount = total_amount</code> (&plusmn;0.01).</li>
+            <li><strong>Zero-Value Invoices:</strong> All-zero amounts are flagged as <code>Warning / Review Required</code>.</li>
+            <li><strong>Duplicate Detection:</strong> Normalized <code>vendor_name + invoice_number</code> (case- and whitespace-insensitive).</li>
+        </ul>
+    </article>
+</section>
+{% endblock %}

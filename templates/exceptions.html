@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Exceptions &amp; Review | DIT – Invoice Processing Automation{% endblock %}
+{% block page_title %}Exceptions &amp; Review Report{% endblock %}
+
+{% block content %}
+<section class="kpi-grid kpi-grid-compact">
+    <article class="kpi-card kpi-invalid">
+        <span class="kpi-label">Invalid Invoices</span>
+        <strong class="kpi-value">{{ summary.get('invalid_invoices', 0) }}</strong>
+    </article>
+    <article class="kpi-card kpi-duplicate">
+        <span class="kpi-label">Duplicate Invoices</span>
+        <strong class="kpi-value">{{ summary.get('duplicate_invoices', 0) }}</strong>
+    </article>
+    <article class="kpi-card kpi-warning">
+        <span class="kpi-label">Warning / Review Required</span>
+        <strong class="kpi-value">{{ summary.get('warning_invoices', 0) }}</strong>
+    </article>
+    <article class="kpi-card kpi-total">
+        <span class="kpi-label">Total Flagged Records</span>
+        <strong class="kpi-value">{{ summary.get('exception_count', 0) }}</strong>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <h2>Flagged Invoices (Invalid, Duplicate &amp; Warning)</h2>
+        <a href="{{ url_for('download_report', report_type='exception_report', format='csv') }}" class="btn btn-primary btn-sm">Download Exception CSV</a>
+    </div>
+
+    {% if exceptions %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Row</th>
+                    <th>Invoice Number</th>
+                    <th>Vendor Name</th>
+                    <th>Date</th>
+                    <th>Subtotal</th>
+                    <th>Tax</th>
+                    <th>Total</th>
+                    <th>Currency</th>
+                    <th>Status</th>
+                    <th>Category</th>
+                    <th>Exception Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for exc in exceptions %}
+                <tr>
+                    <td>{{ exc.row_number }}</td>
+                    <td>{{ exc.invoice_number }}</td>
+                    <td>{{ exc.vendor_name }}</td>
+                    <td>{{ exc.invoice_date }}</td>
+                    <td>{{ exc.subtotal }}</td>
+                    <td>{{ exc.tax_amount }}</td>
+                    <td>{{ exc.total_amount }}</td>
+                    <td>{{ exc.currency }}</td>
+                    <td><span class="status-badge status-{{ exc.status|lower }}">{{ exc.status }}</span></td>
+                    <td>{{ exc.category }}</td>
+                    <td>{{ exc.reason }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state-box">
+        <p class="empty-state">No exceptions, duplicates, or warnings found in the active dataset.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
