@@ -343,5 +343,7 @@ def file_too_large(_error):
 
 if __name__ == "__main__":
     debug_mode = os.environ.get("FLASK_DEBUG", "false").strip().lower() == "true"
-    logger.info("Starting DIT – Invoice Processing Automation server (debug=%s)...", debug_mode)
-    app.run(debug=debug_mode, host="127.0.0.1", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    host = os.environ.get("HOST", "0.0.0.0" if os.environ.get("PORT") else "127.0.0.1")
+    logger.info("Starting DIT – Invoice Processing Automation server (host=%s, port=%d, debug=%s)...", host, port, debug_mode)
+    app.run(debug=debug_mode, host=host, port=port)
